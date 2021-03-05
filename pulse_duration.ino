@@ -28,25 +28,19 @@ void setup()
 
   // must use gclk3 for TC & EIC & EVSYS
   REG_GCLK_GENDIV = GCLK_GENDIV_DIV(0) |         // Divide the 48MHz system clock by 1 = 48MHz
-                    GCLK_GENDIV_ID(3);           // Set division on Generic Clock Generator (GCLK) 3
+                    GCLK_GENDIV_ID(1);           // Set division on Generic Clock Generator (GCLK) 1
   while (GCLK->STATUS.bit.SYNCBUSY);             // Wait for synchronization
 
   REG_GCLK_GENCTRL = GCLK_GENCTRL_IDC |          // Set the duty cycle to 50/50 HIGH/LOW
                      GCLK_GENCTRL_GENEN |        // Enable GCLK
                      GCLK_GENCTRL_SRC_DFLL48M |  // Set the clock source to 48MHz
-                     GCLK_GENCTRL_ID(3);         // Set clock source on GCLK 3
-  while (GCLK->STATUS.bit.SYNCBUSY);             // Wait for synchronization
-
-  // first write to GCLK_CLKCTRL
-  REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN      |   // Enable the generic clock
-                     GCLK_CLKCTRL_GEN_GCLK3  |   // on GCLK3
-                     GCLK_CLKCTRL_ID_EIC;        // Feed the GCLK3 to EIC
+                     GCLK_GENCTRL_ID(1);         // Set clock source on GCLK 1
   while (GCLK->STATUS.bit.SYNCBUSY);             // Wait for synchronization
 
   // second write to CLKCTRL, different ID
   REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN      |   // Enable the generic clock
-                     GCLK_CLKCTRL_GEN_GCLK3  |   // on GCLK3
-                     GCLK_CLKCTRL_ID_TC4_TC5;    // Feed the GCLK3 also to TC4
+                     GCLK_CLKCTRL_GEN_GCLK1  |   // on GCLK1
+                     GCLK_CLKCTRL_ID_TC4_TC5;    // Feed the GCLK1 also to TC4
   while (GCLK->STATUS.bit.SYNCBUSY);             // Wait for synchronization
 
   // Enable the port multiplexer on pin number "PIN"
@@ -61,14 +55,14 @@ void setup()
   EIC->INTENCLR.reg   = EIC_INTENCLR_EXTINT9;                           // Clear the interrupt flag on channel 9
   EIC->CTRL.reg       = EIC_CTRL_ENABLE;                                // Enable EIC peripheral
   while (EIC->STATUS.bit.SYNCBUSY);                                     // Wait for synchronization
-  
-  REG_EVSYS_USER = EVSYS_USER_CHANNEL(1) |                              // Attach the event user (receiver) to channel 0 (n + 1)
-                   EVSYS_USER_USER(EVSYS_ID_USER_TC4_EVU);              // Set the event user (receiver) as timer TC4
 
   REG_EVSYS_CHANNEL = EVSYS_CHANNEL_EDGSEL_NO_EVT_OUTPUT |              // No event edge detection, we already have it on the EIC
                       EVSYS_CHANNEL_PATH_ASYNCHRONOUS    |              // Set event path as asynchronous
                       EVSYS_CHANNEL_EVGEN(EVSYS_ID_GEN_EIC_EXTINT_9) |  // Set event generator (sender) as external interrupt 9
                       EVSYS_CHANNEL_CHANNEL(0);                         // Attach the generator (sender) to channel 0
+  
+  REG_EVSYS_USER = EVSYS_USER_CHANNEL(1) |                              // Attach the event user (receiver) to channel 0 (n + 1)
+                   EVSYS_USER_USER(EVSYS_ID_USER_TC4_EVU);              // Set the event user (receiver) as timer TC4
 
   REG_TC4_EVCTRL  |= TC_EVCTRL_TCEI |            // Enable the TC event input
                      TC_EVCTRL_EVACT_PWP;        // Set up the timer for capture: CC0 high pulsewidth, CC1 period
@@ -94,11 +88,6 @@ void setup()
                    TC_CTRLA_MODE_COUNT32   |     // Set the TC4 timer to 32-bit mode in conjuction with timer TC5
                    TC_CTRLA_ENABLE;              // Enable TC4
   while (TC4->COUNT32.STATUS.bit.SYNCBUSY);      // Wait for synchronization
-
-  REG_TC5_CTRLA |= TC_CTRLA_PRESCALER_DIV1 |     // Set prescaler to 1, 48MHz/1 = 48MHz
-                   TC_CTRLA_MODE_COUNT32   |     // Set the TC5 timer to 32-bit mode in conjuction with timer TC4
-                   TC_CTRLA_ENABLE;              // Enable TC5
-  while (TC5->COUNT32.STATUS.bit.SYNCBUSY);      // Wait for synchronization
 }
 
 void loop()
