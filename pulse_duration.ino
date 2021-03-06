@@ -26,7 +26,6 @@ void setup()
                      PM_APBCMASK_TC4   |         // Switch on the TC4 peripheral
                      PM_APBCMASK_TC5;            // Switch on the TC5 peripheral
 
-  // must use gclk3 for TC & EIC & EVSYS
   REG_GCLK_GENDIV = GCLK_GENDIV_DIV(0) |         // Divide the 48MHz system clock by 1 = 48MHz
                     GCLK_GENDIV_ID(1);           // Set division on Generic Clock Generator (GCLK) 1
   while (GCLK->STATUS.bit.SYNCBUSY);             // Wait for synchronization
